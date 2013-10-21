@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request ,url_for
 from datetime import datetime
 import hashlib, markdown, operator, os, sys
-
+import pagination
 app = Flask(__name__)
+
+
+
 
 # --- routes
 
 @app.errorhandler(404)
 def page_not_found():
     # TODO: write to log
-    data = content_load(os.path.join(os.path.dirname(__file__), 'content/pages/404.md'))
+    data = content_load(os.path.join(os.path.dirname(__file__),
+                    'content/pages/404.md'))
     md = markdown.markdown(data)
     return render_template('page.tpl.html', page=md), 404
 
@@ -26,18 +30,42 @@ def page_not_found():
 @app.route("/posts/<slug>")
 def blogpost(slug):
     md = markdown.Markdown(extensions = ['meta'])
-    data = content_load(os.path.join(os.path.dirname(__file__),"content/blog/{0}.md".format(slug)))
+    data = content_load(os.path.join(os.path.dirname(__file__),
+                "content/blog/{0}.md".format(slug)))
     markup = md.convert(data.decode('utf-8'))
     meta = _md_meta_to_dict(md)
     post = {'meta': meta, 'content': markup}
     return render_template('post.tpl.html', post=post)
 
-@app.route("/")
-def index():
-     files=content_list('blog')
-     newest_first = sorted(files, key=operator.itemgetter("date"), reverse=True)
-     return render_template('posts.tpl.html', posts=newest_first)
 
+
+
+@app.route('/', defaults={'page': 1})
+@app.route('/page/<int:page>')
+def index(page):
+     files=content_list('blog')
+     newest_first = sorted(files,
+                           key=operator.itemgetter("date"),
+                           reverse=True)
+     count        = len(newest_first)
+     newest_first = get_newest_first_for_page(
+         newest_first , page, pagination.PER_PAGE)
+     if not newest_first and page != 1:
+        raise
+     pagination_ = pagination.Pagination(
+         page, pagination.PER_PAGE, count)
+     return render_template('posts.tpl.html',
+                    pagination=pagination_,
+                            posts=newest_first )
+    
+def get_newest_first_for_page(newest_first , page, per_page):
+    if page == 1 :return newest_first[:per_page]
+    start = (page-1) * per_page
+    try:
+        return newest_first[start : start + per_page ]
+    except :
+        return None
+   
 def content_load(file):
     # TODO check if file exists, if exist: open, if not, open content/404.
     with open(file, "r") as f:
@@ -46,17 +74,20 @@ def content_load(file):
 
 def content_list(content_type):
     md = markdown.Markdown(extensions = ['meta'])
-    full_path = os.path.join(os.path.dirname(__file__), "content/{0}".format(content_type))
+    full_path = os.path.join(os.path.dirname(__file__),
+                             "content/{0}".format(content_type))
     files = os.listdir(full_path)
 
     content_items = []
     for fname  in files:
-        data = content_load(os.path.join(os.path.dirname(__file__), "content/{0}/{1}".format(content_type, fname)))
+        data = content_load(os.path.join(os.path.dirname(__file__),
+                "content/{0}/{1}".format(content_type, fname)))
         md.convert(data.decode('utf-8'))
         meta = _md_meta_to_dict(md)
         
         if 'date' in meta:
-            meta['date'] = _jinja2_filter_datetime(meta['date'], '%Y-%m-%d')
+            meta['date'] = _jinja2_filter_datetime(meta['date'],
+                                                   '%Y-%m-%d')
         
         #Fall back to a default slug (straight filename) if necessary
         if not 'slug' in meta:
@@ -81,7 +112,8 @@ def content_list(content_type):
     return content_items
 
 def dwarf_render_page(slug, template='page.tpl.html'):
-    data = content_load(os.path.join(os.path.dirname(__file__), "content/pages/{0}.md".format(slug)))
+    data = content_load(os.path.join(os.path.dirname(__file__),
+                    "content/pages/{0}.md".format(slug)))
     page = {'content': markdown.markdown(data)}
     return render_template(template, page=page)
 
@@ -91,7 +123,9 @@ def dwarf_render_page(slug, template='page.tpl.html'):
 def utility_processor():
     def inject_author(identifier=''):
         md = markdown.Markdown(extensions = ['meta'])
-        data = content_load(os.path.join(os.path.dirname(__file__), "content/authors/{0}.md".format(identifier)))
+        data = content_load(os.path.join(
+            os.path.dirname(__file__),
+            "content/authors/{0}.md".format(identifier)))
         markup = md.convert(data.decode('utf-8'))
         
         author = {}
@@ -112,7 +146,9 @@ def foo():
 @app.context_processor
 def recent_posts():
     files=content_list('blog')
-    newest_first = sorted(files, key=operator.itemgetter("date"), reverse=True)
+    newest_first = sorted(files,
+                    key=operator.itemgetter("date"),
+                    reverse=True)
     return dict(recent_posts=newest_first[:4])
 
 @app.context_processor
@@ -139,5 +175,12 @@ def _md_meta_to_dict(md):
     return items
 
 
+
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug =True)
