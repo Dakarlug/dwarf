@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from flask import Flask, render_template, request ,url_for
+from flask import Flask, render_template, request, url_for
 from datetime import datetime
-import hashlib, markdown, operator, os, sys
-import pagination
-app = Flask(__name__)
+import hashlib, markdown, operator, pagination, os, sys
 
+app = Flask(__name__, 
+            template_folder='templates/default')
 
-
+app.config.update(
+    DEBUG=True,
+    # Make sure the app root folder contains a /content/ folder
+    # (or a symlink to one), or change the value of CONTENT_PATH to 
+    # whatever suits you.
+    CONTENT_PATH = os.path.join(os.path.dirname(__file__)) + 'content/'
+)
 
 # --- routes
 
 @app.errorhandler(404)
 def page_not_found():
     # TODO: write to log
-    data = content_load(os.path.join(os.path.dirname(__file__),
-                    'content/pages/404.md'))
+    data = content_load('pages/404.md')
     md = markdown.markdown(data)
     return render_template('page.tpl.html', page=md), 404
 
@@ -30,15 +35,11 @@ def page_not_found():
 @app.route("/posts/<slug>")
 def blogpost(slug):
     md = markdown.Markdown(extensions = ['meta'])
-    data = content_load(os.path.join(os.path.dirname(__file__),
-                "content/blog/{0}.md".format(slug)))
+    data = content_load("blog/{0}.md".format(slug))
     markup = md.convert(data.decode('utf-8'))
     meta = _md_meta_to_dict(md)
     post = {'meta': meta, 'content': markup}
     return render_template('post.tpl.html', post=post)
-
-
-
 
 @app.route('/', defaults={'page': 1})
 @app.route('/page/<int:page>')
@@ -57,7 +58,7 @@ def index(page):
      return render_template('posts.tpl.html',
                     pagination=pagination_,
                             posts=newest_first )
-    
+
 def get_newest_first_for_page(newest_first , page, per_page):
     if page == 1 :return newest_first[:per_page]
     start = (page-1) * per_page
@@ -66,22 +67,19 @@ def get_newest_first_for_page(newest_first , page, per_page):
     except :
         return None
    
-def content_load(file):
+def content_load(filename):
     # TODO check if file exists, if exist: open, if not, open content/404.
-    with open(file, "r") as f:
+    with open(app.config['CONTENT_PATH'] + filename, "r") as f:
         data = f.read()
     return data
 
 def content_list(content_type):
     md = markdown.Markdown(extensions = ['meta'])
-    full_path = os.path.join(os.path.dirname(__file__),
-                             "content/{0}".format(content_type))
-    files = os.listdir(full_path)
+    files = os.listdir(app.config['CONTENT_PATH'] + content_type)
 
     content_items = []
     for fname  in files:
-        data = content_load(os.path.join(os.path.dirname(__file__),
-                "content/{0}/{1}".format(content_type, fname)))
+        data = content_load("{0}/{1}".format(content_type, fname))
         md.convert(data.decode('utf-8'))
         meta = _md_meta_to_dict(md)
         
@@ -112,8 +110,7 @@ def content_list(content_type):
     return content_items
 
 def dwarf_render_page(slug, template='page.tpl.html'):
-    data = content_load(os.path.join(os.path.dirname(__file__),
-                    "content/pages/{0}.md".format(slug)))
+    data = content_load("pages/{0}.md".format(slug))
     page = {'content': markdown.markdown(data)}
     return render_template(template, page=page)
 
@@ -123,9 +120,7 @@ def dwarf_render_page(slug, template='page.tpl.html'):
 def utility_processor():
     def inject_author(identifier=''):
         md = markdown.Markdown(extensions = ['meta'])
-        data = content_load(os.path.join(
-            os.path.dirname(__file__),
-            "content/authors/{0}.md".format(identifier)))
+        data = content_load("authors/{0}.md".format(identifier))
         markup = md.convert(data.decode('utf-8'))
         
         author = {}
@@ -138,16 +133,12 @@ def utility_processor():
         return author
     return dict(inject_author=inject_author)
 
-@app.context_processor
-def foo():
-    return dict(foo='foo world')
-
 # Returns the 4 most recent blog posts
 @app.context_processor
 def recent_posts():
     files=content_list('blog')
-    newest_first = sorted(files,
-                    key=operator.itemgetter("date"),
+    newest_first = sorted(files, 
+                    key=operator.itemgetter("date"), 
                     reverse=True)
     return dict(recent_posts=newest_first[:4])
 
@@ -174,6 +165,12 @@ def _md_meta_to_dict(md):
         items[key] = md.Meta[key][0]
     return items
 
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+    
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 
 def url_for_other_page(page):
