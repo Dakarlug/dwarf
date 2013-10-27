@@ -1,13 +1,14 @@
-@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400);
+@import url(http://fonts.googleapis.com/css?family=Lato:300,400);
 
 body {
-	color: #444;
-  margin-top: 80px; /* keep at 50px at least to use the fixed top nav */
+  border-top: solid #555 7px;
+	color: #333;
+  padding-top: 1em;
   
 }
 
 body * {
-  font-family: 'Source Sans Pro', sans-serif;
+  font-family: 'Lato', sans-serif;
   font-weight: 300;
 }
 
@@ -15,12 +16,13 @@ strong {
   font-weight: 400;
 }
 
-.navbar {
-  background: #f2f2f2;  
+.block-body {
+ margin-top: 11em; 
 }
 
-.navbar-brand {
-  font-weight: 400;
+.sidebar .site-logo {
+  margin-bottom: 1em;
+  text-align: center;
 }
 
 .sidebar .about,
@@ -42,27 +44,23 @@ strong {
   margin-top: 1.2em;
 }
 
-
-footer {
-  font-size: 0.95em;
-	margin: 50px 0;
-}
-
-a.navbar-brand{
-  font-weight: 200;
-  font-size: 2em;
+.well {
+  background: #f5f5f5;
 }
 
 a:visited, a:link {
-  color: #8e0800;
+  color: #007200;
+  text-decoration: underline;
+}
+
+a:hover {
+  background: #eaeaea;
 }
 
 
 .container .row {
   font-size: 1.2em;  
 }
-
-
 
 
 .post-lead {
@@ -80,13 +78,22 @@ a:visited, a:link {
   margin-bottom: 0.8em;
 }
 
+.post-content a {
+  font-weight: 400;
+}
+
+.post-content li, 
+.block li {
+  list-style-image: url(../img/arrow-smooth.png);
+}
+
 ul.posts {
   padding-left: 0;
 }
 
 ul.posts li {
   border-bottom: solid #eee 1px;
-  font-size: 1.4em;
+  font-size: 1.2em;
   list-style-type: none;
   margin-bottom: 1em;
   padding-bottom: 1em;
@@ -116,7 +123,28 @@ ul.recent-posts li {
   padding-bottom: 1em;
 }
 
+.block-tools h2 {
+  font-size: 1.1em;
+    
+}
 
+.block-tools a {
+  text-decoration: none
+}
+
+.pagination a,
+.pagination strong 
+{
+  padding: 0.5em;
+}
+
+.footer {
+  background: #f5f5f5;
+  font-size: 0.9em;
+  margin-bottom: 1em;
+  padding: 1em 0 0.3em 1em;
+  text-align: center;
+}
 
 
 

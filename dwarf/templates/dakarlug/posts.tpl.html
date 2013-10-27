@@ -7,7 +7,7 @@
       <span class="date">{{ post.date | strftime}} </span>| 
       <a href="/posts/{{ post.slug }}">{{ post.title }} </a><br />
       <span class="lead">{{ post.lead}}</span> <br />
-      <span class="readmore"> <a href="/posts/{{ post.slug }}"> Continue reading &raquo;</a> </span>
+      <span class="readmore"> <a href="/posts/{{ post.slug }}"> Lire plus &raquo;</a> </span>
     </li>
   {% else %}
     <li><em>No posts here so far</em></li>
@@ -33,9 +33,11 @@
   </div>
 {% endblock %}
 
-{% block subsites %}
+{% block tools %}
+<div class="block block-tools">
+<h2>Les autres outils de DakarLUG</h2>
 <ul>
-  <li>La liste</li>
-  <li>T-shirts</li>
+  <li><a href="http://dakarlug.org/liste">La liste de discussion</a></li>
 </ul>
+</div>
 {% endblock %}
