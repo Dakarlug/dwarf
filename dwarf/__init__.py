@@ -5,7 +5,7 @@ from datetime import datetime
 import hashlib, markdown, operator, pagination, os, sys
 
 app = Flask(__name__, 
-            template_folder='templates/default')
+            template_folder='templates/dakarlug')
 
 app.config.update(
     DEBUG=True,
