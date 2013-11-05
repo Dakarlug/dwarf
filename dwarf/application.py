@@ -177,4 +177,4 @@ def url_for_other_page(page):
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 if __name__ == "__main__":
-    app.run(host ='10.26.0.37')
+    app.run()
